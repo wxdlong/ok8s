@@ -1,4 +1,4 @@
-name: CI
+name: Download k8s images.
 
 on:
   push:
@@ -7,15 +7,14 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v1
     - name: Run a one-line script
       run: echo Hello, ok8s!
     - name: Download K8s images
       run: |
+        echo "Download k8s:$(cat offlines/version) iamges"
         images=""
         for image in $(cat offlines/images);
         do
@@ -25,4 +24,13 @@ jobs:
         done
 
         echo "docker save -o k8s.tar.gz ${images}"
-        docker save -o k8s.tar.gz ${images}
+        docker save -o offlines/k8s.tar.gz ${images}
+        ls -lth k8s.tar.gz
+    - name: Login Docker Push images
+      env:
+        ACCESS_TOKEN: ${{ secrets.DOCKER_PW }} 
+      run: |
+        docker login -u wxdlong -p ${ACCESS_TOKEN}
+        cd offlines
+        docker build . --file Dockerfile --tag wxdlong/ok8s:$(cat version)
+        docker push wxdlong/ok8s:$(cat version)

@@ -1,0 +1,21 @@
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+WorkingDirectory=/var/lib/kubelet
+ExecStart=/opt/k8s/kubelet \
+  --config=/var/lib/kubelet/config.yaml \
+  --cni-bin-dir=/opt/k8s \
+  --cni-conf-dir=/etc/cni/net.d \
+  --hostname-override=10.0.2.15 \
+  --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \
+  --network-plugin=cni \
+  --pod-infra-container-image=k8s.gcr.io/pause:3.1 \
+  --root-dir=/var/lib/kubelet
+  --v=2
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
