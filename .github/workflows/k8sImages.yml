@@ -30,6 +30,8 @@ jobs:
       env:
         ACCESS_TOKEN: ${{ secrets.DOCKER_PW }} 
       run: |
+        echo "PWD:${PWD}"
+        cd offlines
         docker login -u wxdlong -p ${ACCESS_TOKEN}
         docker build . --file Dockerfile --tag wxdlong/ok8s:$(cat version)
         docker push wxdlong/ok8s:$(cat version)
