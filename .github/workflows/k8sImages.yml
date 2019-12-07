@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'offlines/**'
 
 jobs:
   build:
@@ -34,4 +36,9 @@ jobs:
         cd offlines
         docker login -u wxdlong -p ${ACCESS_TOKEN}
         docker build . --file Dockerfile --tag wxdlong/ok8s:$(cat version)
+        echo "push to docker hub"
+        docker push wxdlong/ok8s:$(cat version)
+
+        echo "push to aliyun"
+        docker login --username=yjmnrg@gmail.com registry.cn-shanghai.aliyuncs.com -p ${ACCESS_TOKEN}
         docker push wxdlong/ok8s:$(cat version)
