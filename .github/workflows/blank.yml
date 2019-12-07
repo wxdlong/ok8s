@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: Run a one-line script
+      run: echo Hello, ok8s!
+    - name: Download K8s images
+      run: |
+        images=""
+        for image in $(cat offlines/images);
+        do
+           echo "docker pull ${image}"
+           docker pull ${image}
+           images="${image} ${images}"
+        done
+
+        echo "docker save -o k8s.tar.gz ${images}"
+        docker save -o k8s.tar.gz ${images}
