@@ -17,7 +17,8 @@ jobs:
     - name: Download K8s images
       run: |
         cd offlines
-        ./download.sh 
+        chmod +x ./download.sh
+        /bin/bash download.sh -D
     - name: Login Docker Push images
       env:
         ACCESS_TOKEN: ${{ secrets.DOCKER_PW }} 

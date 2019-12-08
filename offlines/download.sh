@@ -67,6 +67,12 @@ function down2Docker() {
     ls -lth ${DIR}/ok8s.tar.gz
 }
 
+function usage(){
+    cat <<EOF
+./download.sh -D
+EOF
+}
+
 function main() {
     # check if use bash shell
     readlink /proc/$$/exe | grep -q "dash" && {
