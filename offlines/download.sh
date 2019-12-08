@@ -31,7 +31,7 @@ function downK8sBins() {
     curl -L ${HELM_URL} | tar -zx -C ${TEMP_FILES}
 
     echo "Download Kubectl from ${KUBECTL_URL}"
-    curl -LO ${KUBECTL_URL} | chmod +x
+    curl -LO ${KUBECTL_URL}
 
     echo "Download Kubeadm from ${KUBEADM_URL}"
     curl -LO ${KUBEADM_URL}
@@ -63,7 +63,7 @@ function down2Docker() {
     downK8sBins
     downK8sImages
     
-    tar -czvf ${DIR}/ok8s.tar.gz -C ${DIR} ${DIR}/download
+    tar -czvf ${DIR}/ok8s.tar.gz -C ${DIR}/download .
     ls -lth ${DIR}/ok8s.tar.gz
 }
 
