@@ -3,6 +3,7 @@ LABEL Author=wxdlong \
       Email=wxdlong@qq.com \
       WHAT="Include k8s basic images"
 
-COPY k8s.tar.gz /home
-ENTRYPOINT ["cp","-rf","/home/k8s.tar.gz","/data"]
+COPY ok8s.tar.gz /home
+
+ENTRYPOINT ["tar","-xzvf","/home/k8s.tar.gz","-C","/data"]
 

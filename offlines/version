@@ -1,1 +1,2 @@
-v1.16.2
+k8sVersion=v1.16.3
+helmVersion=v3.0.0
