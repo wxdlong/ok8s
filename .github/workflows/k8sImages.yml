@@ -35,4 +35,5 @@ jobs:
         
         echo "push to aliyun"
         docker login --username=yjmnrg@gmail.com registry.cn-shanghai.aliyuncs.com -p ${ACCESS_TOKEN}
+        docker tag wxdlong/ok8s:${k8sVersion} registry.cn-hangzhou.aliyuncs.com/wxdlong/ok8s:${k8sVersion}
         docker push registry.cn-hangzhou.aliyuncs.com/wxdlong/ok8s:${k8sVersion}

@@ -1,6 +1,0 @@
-https://get.helm.sh/helm-v3.0.0-linux-amd64.tar.gz
-https://storage.googleapis.com/kubernetes-release/release/${k8sVersion}/bin/linux/amd64/kubectl
-https://storage.googleapis.com/kubernetes-release/release/${k8sVersion}/bin/linux/amd64/kubeadm
-https://storage.googleapis.com/kubernetes-release/release/${k8sVersion}/bin/linux/amd64/kubelet
-
-
