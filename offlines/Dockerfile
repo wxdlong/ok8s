@@ -5,5 +5,5 @@ LABEL Author=wxdlong \
 
 COPY ok8s.tar.gz /home
 
-ENTRYPOINT ["tar","-xzvf","/home/k8s.tar.gz","-C","/data"]
+ENTRYPOINT ["tar","-xzvf","/home/ok8s.tar.gz","-C","/data"]
 

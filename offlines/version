@@ -1,2 +1,3 @@
 k8sVersion=v1.16.3
 helmVersion=v3.0.0
+dockerVersion=19.03.5

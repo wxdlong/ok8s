@@ -18,7 +18,7 @@ jobs:
       run: |
         cd offlines
         chmod +x ./download.sh
-        /bin/bash download.sh -D
+        ./download.sh -D
     - name: Login Docker Push images
       env:
         ACCESS_TOKEN: ${{ secrets.DOCKER_PW }} 
@@ -30,7 +30,9 @@ jobs:
         docker build . --file Dockerfile --tag wxdlong/ok8s:${k8sVersion}
         echo "push to docker hub"
         docker push wxdlong/ok8s:${k8sVersion}
-
+        
+        docker logout
+        
         echo "push to aliyun"
         docker login --username=yjmnrg@gmail.com registry.cn-shanghai.aliyuncs.com -p ${ACCESS_TOKEN}
-        docker push wxdlong/ok8s:${k8sVersion}
+        docker push registry.cn-hangzhou.aliyuncs.com/wxdlong/ok8s:${k8sVersion}
