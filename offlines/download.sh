@@ -9,6 +9,7 @@ KUBECTL_URL=https://storage.googleapis.com/kubernetes-release/release/${k8sVersi
 KUBEADM_URL=https://storage.googleapis.com/kubernetes-release/release/${k8sVersion}/bin/linux/amd64/kubeadm
 KUBELET_URL=https://storage.googleapis.com/kubernetes-release/release/${k8sVersion}/bin/linux/amd64/kubelet
 HELM_URL=https://get.helm.sh/helm-${helmVersion}-linux-amd64.tar.gz
+VIRTCTL_URL=https://github.com/kubevirt/kubevirt/releases/download/${kubevirtVersion}/virtctl-${kubevirtVersion}-linux-amd64
 TEMP_FILES=/tmp/k8s_offline.$$
 
 function init() {
@@ -38,6 +39,9 @@ function downK8sBins() {
 
     echo "Download Kubelet from ${KUBELET_URL}"
     curl -LO ${KUBELET_URL}
+
+    echo "Download Kubevirt from ${VIRTCTL_URL}"
+    curl -LO ${VIRTCTL_URL}
 
     find ${TEMP_FILES} -type f | xargs -I {} mv {} ${DIR}/download/bin
 

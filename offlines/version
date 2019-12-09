@@ -1,3 +1,4 @@
 k8sVersion=v1.16.3
 helmVersion=v3.0.0
+kubevirtVersion=v0.24.0
 dockerVersion=19.03.5
