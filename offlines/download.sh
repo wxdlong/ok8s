@@ -40,9 +40,6 @@ function downK8sBins() {
     echo "Download Kubelet from ${KUBELET_URL}"
     curl -LO ${KUBELET_URL}
 
-    echo "Download Kubevirt from ${VIRTCTL_URL}"
-    curl -LO ${VIRTCTL_URL}
-
     find ${TEMP_FILES} -type f | xargs -I {} mv {} ${DIR}/download/bin
 
 }
