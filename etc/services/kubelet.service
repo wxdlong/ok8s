@@ -4,9 +4,9 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 
 [Service]
 WorkingDirectory=/var/lib/kubelet
-ExecStart=/opt/ok8s/kubelet \
+ExecStart=/opt/ok8s/bin/kubelet \
   --config=/var/lib/kubelet/config.yaml \
-  --cni-bin-dir=/opt/ok8s \
+  --cni-bin-dir=/opt/ok8s/cni \
   --cni-conf-dir=/etc/cni/net.d \
   --hostname-override=ok8s \
   --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \

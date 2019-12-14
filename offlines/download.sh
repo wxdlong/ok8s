@@ -15,8 +15,8 @@ TEMP_FILES=/tmp/k8s_offline.$$
 function init() {
     echo "Download path: ${DIR}"
     rm -rf ${TEMP_FILES} | echo "Areadly clean temp download files!"
-    mkdir -p ${DIR}/download/bin
-    mkdir -p ${TEMP_FILES}
+    mkdir -p ${DIR}/download/{bin,cni}
+    mkdir -p ${TEMP_FILES}/{bin,cni}
 }
 
 function downDocker() {
@@ -27,12 +27,12 @@ function downDocker() {
 function downK8sBins() {
     downDocker
 
-    cd ${TEMP_FILES}
+    cd ${TEMP_FILES}/bin
     echo "Download Helm from ${HELM_URL}"
     curl -L ${HELM_URL} | tar -zx -C ${TEMP_FILES}
 
     echo "Download CNI from ${CNI_URL}"
-    curl -L ${CNI_URL} | tar -zx -C ${TEMP_FILES}
+    curl -L ${CNI_URL} | tar -zx -C ${TEMP_FILES}/cni
 
     echo "Download Kubectl from ${KUBECTL_URL}"
     curl -LO ${KUBECTL_URL}
@@ -43,8 +43,12 @@ function downK8sBins() {
     echo "Download Kubelet from ${KUBELET_URL}"
     curl -LO ${KUBELET_URL}
 
+    echo "Download socat"
+    curl -LO https://raw.githubusercontent.com/andrew-d/static-binaries/master/binaries/linux/x86_64/socat
+
     ls -lth  ${TEMP_FILES}
-    find ${TEMP_FILES} -type f | xargs -I {} mv {} ${DIR}/download/bin
+    find ${TEMP_FILES}/bin -type f | xargs -I {} mv {} ${DIR}/download/bin
+    find ${TEMP_FILES}/cni -type f | xargs -I {} mv {} ${DIR}/download/cni
 
 }
 

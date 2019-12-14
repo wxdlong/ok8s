@@ -165,18 +165,20 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 WorkingDirectory=/var/lib/kubelet
 ExecStart=/opt/ok8s/bin/kubelet \
   --config=/var/lib/kubelet/config.yaml \
-  --cni-bin-dir=/opt/ok8s/bin \
+  --cni-bin-dir=/opt/ok8s/cni \
   --cni-conf-dir=/etc/cni/net.d \
-  --kubeconfig=/etc/kubernetes/kubelet.conf \
+  --hostname-override=ok8s \
+  --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \
   --network-plugin=cni \
   --pod-infra-container-image=k8s.gcr.io/pause:3.1 \
   --root-dir=/var/lib/kubelet
-  --v=5
+  --v=2
 Restart=always
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
+
 EOF
 
 ```
@@ -293,11 +295,16 @@ kubeadm join 10.0.2.15:6443 --token 9uisa2.aaj0833t08vvbpwe \
 
 8. CoreDNS还是pending状态，可能是因为`Node NotReady`, 因为标签`node.kubernetes.io/not-ready:NoExecute for 300s`不会让CoreDns在没有ready的node上运行。    
 这次`kubect describe node` 查看原因flannel网络插件没安装。 `network plugin is not ready: cni config uninitialized`    
-解决办法: `kubectl apply -f addon/flannel/kube-flannel.yaml`
+解决办法: 必须下载CNI对应的plugin存到相应目录即可. https://github.com/containernetworking/plugins/releases
 ```bash
 [root@wxd kubernetes]# kubectl get node
 NAME       STATUS     ROLES    AGE   VERSION
 wxd.long   NotReady   master   15m   v1.16.3
+
+[root@wxd bin]# tail -f /var/log/messages 
+Dec 14 08:57:54 wxd kubelet: E1214 08:57:54.186592   20895 kubelet.go:2187] Container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
+Dec 14 08:16:26 wxd kubelet: W1214 08:16:26.221431    7367 cni.go:237] [failed to find plugin "flannel" in path [/opt/cni/bin] failed to find plugin "portmap" in path [/opt/cni/bin]]
+
 ```
 
 9. 
