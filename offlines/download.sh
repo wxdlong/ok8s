@@ -21,7 +21,7 @@ function init() {
 
 function downDocker() {
     echo "Download Docker from ${DOCKER_URL}"
-    curl -L ${DOCKER_URL} | tar -zx -C ${TEMP_FILES}
+    curl -L ${DOCKER_URL} | tar -zx -C ${TEMP_FILES}/bin
 }
 
 function downK8sBins() {

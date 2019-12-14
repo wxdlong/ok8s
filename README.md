@@ -63,7 +63,7 @@ nginx:1.16.0
 cat <<EOF > /etc/profile.d/ok8s.sh 
 #set k8s environment
 K8S=/opt/ok8s
-PATH=${K8S}/bin:${PATH}
+PATH=${K8S}/bin:${K8S}/cni:${PATH}
 export PATH
 EOF
 
@@ -236,32 +236,31 @@ EOF
 4. `write /proc/self/attr/keycreate: permission denied`,   
 这个时候需要禁用selinux了。   
 `setenforce 0  && echo "SELINUX=disabled" > /etc/selinux/config`
-```bash
-CreatePodSandbox for pod "etcd-wxd.long_kube-system(e35cacb5899446e3bff45112961b61a1)" failed: rpc error: code = Unknown desc = failed to start sandbox container for pod "etcd-wxd.long": Error response from daemon: OCI runtime create failed: container_linux.go:346: starting container process caused "process_linux.go:449: container init caused \"write /proc/self/attr/keycreate: permission denied\"": unknown
-
-``` 
+    ```bash
+    CreatePodSandbox for pod "etcd-wxd.long_kube-system(e35cacb5899446e3bff45112961b61a1)" failed: rpc error: code = Unknown desc = failed to start sandbox container for pod "etcd-wxd.long": Error response from daemon: OCI runtime create failed: container_linux.go:346: starting container process caused "process_linux.go:449: container init caused \"write /proc/self/attr/keycreate: permission denied\"": unknown
+    ``` 
 5. 好，总算继续了。静待佳音。你可以持续关注日志/var/log/message和监控kubelet状态。kubeadm会查检安装环境，创建一系列配置文件，启动kubelet.
 
 6. 当你看到下面的输出，那么就恭喜安装成功。按照提示copy Kube配置文件到home目录下就可以用kubeclt命令了。
-```bash
-Your Kubernetes control-plane has initialized successfully!
+    ```bash
+    Your Kubernetes control-plane has initialized successfully!
 
-To start using your cluster, you need to run the following as a regular user:
+    To start using your cluster, you need to run the following as a regular user:
 
-  mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+    mkdir -p $HOME/.kube
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-You should now deploy a pod network to the cluster.
-Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
-  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+    You should now deploy a pod network to the cluster.
+    Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+    https://kubernetes.io/docs/concepts/cluster-administration/addons/
 
-Then you can join any number of worker nodes by running the following on each as root:
+    Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join 10.0.2.15:6443 --token 9uisa2.aaj0833t08vvbpwe \
-    --discovery-token-ca-cert-hash sha256:3f6743345c9bbd953500cfc32622aab388ffb255e0e9c7d41ac7e5948148adc0 
+    kubeadm join 10.0.2.15:6443 --token 9uisa2.aaj0833t08vvbpwe \
+        --discovery-token-ca-cert-hash sha256:3f6743345c9bbd953500cfc32622aab388ffb255e0e9c7d41ac7e5948148adc0 
 
-```
+    ```
 
 7. 检查Cluster状态`kubectl cluster-info`， 发现还有DNS pod没有启动。用`kubectl describe` 命令查看内部状态, 发现没有node可以运行当前pod.
 默认Master Node不允许任何pod运行。并且Dns Pod 有这个Tolerations： node-role.kubernetes.io/master:NoSchedule。      
@@ -296,18 +295,40 @@ kubeadm join 10.0.2.15:6443 --token 9uisa2.aaj0833t08vvbpwe \
 8. CoreDNS还是pending状态，可能是因为`Node NotReady`, 因为标签`node.kubernetes.io/not-ready:NoExecute for 300s`不会让CoreDns在没有ready的node上运行。    
 这次`kubect describe node` 查看原因flannel网络插件没安装。 `network plugin is not ready: cni config uninitialized`    
 解决办法: 必须下载CNI对应的plugin存到相应目录即可. https://github.com/containernetworking/plugins/releases
-```bash
-[root@wxd kubernetes]# kubectl get node
-NAME       STATUS     ROLES    AGE   VERSION
-wxd.long   NotReady   master   15m   v1.16.3
+    ```bash
+    [root@wxd kubernetes]# kubectl get node
+    NAME       STATUS     ROLES    AGE   VERSION
+    wxd.long   NotReady   master   15m   v1.16.3
 
-[root@wxd bin]# tail -f /var/log/messages 
-Dec 14 08:57:54 wxd kubelet: E1214 08:57:54.186592   20895 kubelet.go:2187] Container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
-Dec 14 08:16:26 wxd kubelet: W1214 08:16:26.221431    7367 cni.go:237] [failed to find plugin "flannel" in path [/opt/cni/bin] failed to find plugin "portmap" in path [/opt/cni/bin]]
+    [root@wxd bin]# tail -f /var/log/messages 
+    Dec 14 08:57:54 wxd kubelet: E1214 08:57:54.186592   20895 kubelet.go:2187] Container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized
+    Dec 14 08:16:26 wxd kubelet: W1214 08:16:26.221431    7367 cni.go:237] [failed to find plugin "flannel" in path [/opt/cni/bin] failed to find plugin "portmap" in path [/opt/ok8s/cni]]
+    ```
+
+9. 千心万苦，终于还是正常了!
+    ```bash
+    [root@wxd ~]# kubectl get pods -A
+    NAMESPACE     NAME                               READY   STATUS    RESTARTS   AGE
+    kube-system   coredns-5644d7b6d9-7px84           1/1     Running   0          3h36m
+    kube-system   coredns-5644d7b6d9-k548n           1/1     Running   0          3h37m
+    kube-system   etcd-wxd.long                      1/1     Running   1          3h50m
+    kube-system   kube-apiserver-wxd.long            1/1     Running   1          3h50m
+    kube-system   kube-controller-manager-wxd.long   1/1     Running   1          3h50m
+    kube-system   kube-flannel-ds-amd64-dhxxc        1/1     Running   0          104m
+    kube-system   kube-proxy-shmzl                   1/1     Running   1          3h51m
+    kube-system   kube-scheduler-wxd.long            1/1     Running   1          3h50m
+    ```
+## 安装dashboard.
+
+```bash
+[root@wxd ~]# kubectl apply -f addon/dashboard/kubernetes-dashboard.yaml
+customresourcedefinition.apiextensions.k8s.io/network-attachment-definitions.k8s.cni.cncf.io created
+clusterrole.rbac.authorization.k8s.io/multus created
+clusterrolebinding.rbac.authorization.k8s.io/multus created
+serviceaccount/multus created
+configmap/multus-cni-config created
+daemonset.apps/kube-multus-ds-amd64 created
 
 ```
-
-9. 
-
 ## 参考
 [Bootstrapping clusters with kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)     
