@@ -1,5 +1,5 @@
 ## ok8s
-纯离线安装K8s单机学习环境。 测试环境为Centos7.6      
+纯离线安装K8s单机学习环境。 测试环境为Centos7.6,参考Github --> kubeasz    
 Docker: `19.03`   
 K8s: `1.16.3`   
 Flannel: `0.11.0-amd64`   
@@ -10,7 +10,7 @@ Multus: `3.4`
 
 ## 机制
 
-1. K8s所需基本组件都有纯二进制文件(没有任何信赖).
+1. K8s所需基本组件都有纯二进制文件(没有任何依赖).
 2. 提前下好所有镜像。
 
 >所有文件我都提前打包到wxdlong/ok8s:v1.16.3
@@ -21,13 +21,14 @@ Multus: `3.4`
 2. 配置docker, kubelet服务。   
 3. kubeadm初始化集群。   
 4. 安装flannel插件。    
-5. 安装dashboard插件。   
-6. 安装multus插件。    
+5. 安装multus插件。   
+6. 安装dashboard插件。  
 7. 安装helm.   
 
 ## 下载离线包
 离线包包括docker相关二进制文件(ctr, docker-init, containerd, docker, docker-proxy, runccontainerd-shim, dockerd )    
 K8s二进制文件(kubeadm, kubelet, kubectl)    
+CNI插件()
 K8s镜像：  
 ```text   
 k8s.gcr.io/kube-apiserver:v1.16.3    
@@ -45,7 +46,7 @@ nginx:1.16.0
 ```
 
 1. 如果己经有docker. 则用docker自动下载所有离线数据
-`docker run --rm -v ${PWD}/download:/data wxdlong/ok8s:v1.16.3`
+`docker run --rm -v ${PWD}/download:/ok8s wxdlong/ok8s:v1.16.3`
 
 2. 否则，运行./ok8s.sh -D. (需要运行在linux机器上)
 
@@ -191,7 +192,7 @@ EOF
 --v=7 超详细日志。看到kubeadm执行的整个流程。   
 --pod-network-cidr=10.244.0.0/16  flannel网络插件的参数   
 --kubernetes-version=v1.16.3 指定k8s镜像版本。 
->接下来例出可能出现的错误。一个一个解决 
+>接下来例出可能出现的错误。一个一个解决。ini命令可以重复执行， 或者`kubeadm reset`重置环境。 
 
 1. CPU数量必须大于1. 配置虚拟机CPU数量后重启！
     ```
@@ -218,7 +219,7 @@ EOF
     /dev/mapper/centos-home /home                   xfs     defaults        0 0
     ##/dev/mapper/centos-swap swap                    swap    defaults        0 0
     ```
-3. iptables设置。
+3. iptables设置。清空Iptables,禁用firewalld. 如果不做的话，重启机器后，coredns可能起动不了。
     ```bash
     cat <<EOF > /etc/sysctl.d/98-ok8s.conf
     net.ipv4.ip_forward = 1
@@ -228,6 +229,13 @@ EOF
     EOF
 
     sysctl -p /etc/sysctl.d/98-ok8s.conf
+
+    iptables -F && iptables -X \
+        && iptables -F -t nat && iptables -X -t nat \
+        && iptables -F -t raw && iptables -X -t raw \
+        && iptables -F -t mangle && iptables -X -t mangle
+    
+    systemctl disable firewalld
     ```
     ```bash
     [preflight] Some fatal errors occurred:
@@ -318,17 +326,100 @@ EOF
     kube-system   kube-proxy-shmzl                   1/1     Running   1          3h51m
     kube-system   kube-scheduler-wxd.long            1/1     Running   1          3h50m
     ```
-## 安装dashboard.
+
+## 集成[Mutlus](https://github.com/intel/multus-cni)
+
+>Note: 为了让所有Net plugin插件都放在一起。可以先`ln -sf /opt/ok8s/cni/ /opt/cni/bin`
+
+`kubectl apply -f addon/multus/multus-daemonset`
 
 ```bash
-[root@wxd ~]# kubectl apply -f addon/dashboard/kubernetes-dashboard.yaml
-customresourcedefinition.apiextensions.k8s.io/network-attachment-definitions.k8s.cni.cncf.io created
-clusterrole.rbac.authorization.k8s.io/multus created
-clusterrolebinding.rbac.authorization.k8s.io/multus created
-serviceaccount/multus created
-configmap/multus-cni-config created
-daemonset.apps/kube-multus-ds-amd64 created
-
+[root@wxd ~]# kubectl get pods -A
+NAMESPACE              NAME                                         READY   STATUS    RESTARTS   AGE
+kube-system            kube-multus-ds-amd64-jlztd                   1/1     Running   3          13h
 ```
+
+
+
+## 安装[dashboard](https://github.com/kubernetes/dashboard)
+1. Apply images. 版本必须要是比较新的，否则dashboard打开会出现404的错误。
+    ```bash
+    [root@wxd ~]# kubectl apply -f addon/dashboard/kubernetes-dashboard.yaml
+    customresourcedefinition.apiextensions.k8s.io/network-attachment-definitions.k8s.cni.cncf.io created
+    clusterrole.rbac.authorization.k8s.io/multus created
+    clusterrolebinding.rbac.authorization.k8s.io/multus created
+    serviceaccount/multus created
+    configmap/multus-cni-config created
+    daemonset.apps/kube-multus-ds-amd64 created
+    ```
+
+2. dashboard起来之后，创建用户`kubectl apply -f addon/dashboard/kube-admin.yml`;      
+ 绑定权限`kubectl apply -f addon/dashboard/kube-role.yml`
+ 查看token https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md 
+    ```bash
+    [root@wxd hello_helm]# kubectl get pods -A
+    NAMESPACE              NAME                                         READY   STATUS    RESTARTS   AGE
+    kube-system            coredns-5644d7b6d9-7px84                     1/1     Running   3          16h
+    kube-system            coredns-5644d7b6d9-k548n                     1/1     Running   3          16h
+    kube-system            etcd-wxd.long                                1/1     Running   4          17h
+    kube-system            kube-apiserver-wxd.long                      1/1     Running   4          17h
+    kube-system            kube-controller-manager-wxd.long             1/1     Running   4          17h
+    kube-system            kube-flannel-ds-amd64-dhxxc                  1/1     Running   4          14h
+    kube-system            kube-multus-ds-amd64-jlztd                   1/1     Running   3          13h
+    kube-system            kube-proxy-shmzl                             1/1     Running   4          17h
+    kube-system            kube-scheduler-wxd.long                      1/1     Running   4          17h
+    kubernetes-dashboard   dashboard-metrics-scraper-76585494d8-k96c6   1/1     Running   3          12h
+    kubernetes-dashboard   kubernetes-dashboard-5996555fd8-5fjbb        1/1     Running   6          12h
+    ```
+
+## 集成Helm
+3.0的Helm好像什么都不用做，只要有Helm就可以了。
+1. 创建并安装一个demo, `helm create demo`
+    ```bash
+    [root@wxd ~]# helm create demo
+    Creating demo
+    [root@wxd ~]# helm install hello demo
+    NAME: hello
+    LAST DEPLOYED: Sat Dec 14 23:13:14 2019
+    NAMESPACE: default
+    STATUS: deployed
+    REVISION: 1
+    NOTES:
+    1. Get the application URL by running these commands:
+    export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/name=demo,app.kubernetes.io/instance=hello" -o jsonpath="{.items[0].metadata.name}")
+    echo "Visit http://127.0.0.1:8080 to use your application"
+    kubectl --namespace default port-forward $POD_NAME 8080:80
+    ```
+
+2. 查看状态 `helm list`
+    ```bash
+    [root@wxd ~]# helm list
+    NAME 	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART     	APP VERSION
+    hello	default  	1       	2019-12-14 23:13:14.225418946 -0500 EST	deployed	demo-0.1.0	1.16.0     
+    [root@wxd ~]# kubectl get pods -A
+    NAMESPACE              NAME                                         READY   STATUS    RESTARTS   AGE
+    default                hello-demo-54dd7bb694-4pdh9                  1/1     Running   0          7s
+    kube-system            coredns-5644d7b6d9-7px84                     1/1     Running   3          17h
+    kube-system            coredns-5644d7b6d9-k548n                     1/1     Running   3          17h
+    kube-system            etcd-wxd.long                                1/1     Running   4          17h
+    kube-system            kube-apiserver-wxd.long                      1/1     Running   4          17h
+    kube-system            kube-controller-manager-wxd.long             1/1     Running   4          17h
+    kube-system            kube-flannel-ds-amd64-dhxxc                  1/1     Running   4          15h
+    kube-system            kube-multus-ds-amd64-jlztd                   1/1     Running   3          13h
+    kube-system            kube-proxy-shmzl                             1/1     Running   4          17h
+    kube-system            kube-scheduler-wxd.long                      1/1     Running   4          17h
+    kubernetes-dashboard   dashboard-metrics-scraper-76585494d8-k96c6   1/1     Running   3          13h
+    kubernetes-dashboard   kubernetes-dashboard-5996555fd8-5fjbb        1/1     Running   6          13h
+    ```
+
+## 总结
+安装k8s其实没有想像中那么复杂了，主要是解决网络问题！ 第一次安装不求甚解，各种配置直接用默认值就好了。
+至于Kubeadm初始化细节，后续再讨论。   
 ## 参考
-[Bootstrapping clusters with kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)     
+[Bootstrapping clusters with kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)    
+[Helm](https://helm.sh/docs/intro/quickstart/)    
+[Multis](https://github.com/intel/multus-cni)     
+[CNI](https://github.com/containernetworking/plugins)    
+[Dashboard](https://github.com/kubernetes/dashboard)    
+[ok8s](https://github.com/wxdlong/ok8s)   
+[kubeasz](https://github.com/easzlab/kubeasz)

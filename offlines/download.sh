@@ -22,6 +22,7 @@ function init() {
 function downDocker() {
     echo "Download Docker from ${DOCKER_URL}"
     curl -L ${DOCKER_URL} | tar -zx -C ${TEMP_FILES}/bin
+    chmod 755 ${TEMP_FILES}/bin/*
 }
 
 function downK8sBins() {
@@ -46,6 +47,9 @@ function downK8sBins() {
     echo "Download socat"
     curl -LO https://raw.githubusercontent.com/andrew-d/static-binaries/master/binaries/linux/x86_64/socat
 
+    chmod 755 ${TEMP_FILES}/bin/*
+    chmod 755 ${TEMP_FILES}/cni/*
+    
     ls -lth  ${TEMP_FILES}
     find ${TEMP_FILES}/bin -type f | xargs -I {} mv {} ${DIR}/download/bin
     find ${TEMP_FILES}/cni -type f | xargs -I {} mv {} ${DIR}/download/cni
