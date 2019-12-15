@@ -1,5 +1,5 @@
 ## ok8s
-纯离线安装K8s单机学习环境。 测试环境为Centos7.6,参考Github --> kubeasz    
+纯离线安装K8s单机学习环境。 测试环境为Centos7.7,参考Github --> kubeasz    
 Docker: `19.03`   
 K8s: `1.16.3`   
 Flannel: `0.11.0-amd64`   
@@ -28,7 +28,7 @@ Multus: `3.4`
 ## 下载离线包
 离线包包括docker相关二进制文件(ctr, docker-init, containerd, docker, docker-proxy, runccontainerd-shim, dockerd )    
 K8s二进制文件(kubeadm, kubelet, kubectl)    
-CNI插件()
+CNI插件(bandwidth  bridge  dhcp  firewall  flannel  host-device  host-local  ipvlan  loopback  macvlan  multus  portmap  ptp  sbr  static  tuning  vlan)    
 K8s镜像：  
 ```text   
 k8s.gcr.io/kube-apiserver:v1.16.3    
@@ -61,7 +61,7 @@ nginx:1.16.0
 ## 配置环境变量
 将k8s二进制目录`/opt/ok8s`加入到环境变量中.
 ```bash
-cat <<EOF > /etc/profile.d/ok8s.sh 
+cat <<'EOF' > /etc/profile.d/ok8s.sh 
 #set k8s environment
 K8S=/opt/ok8s
 PATH=${K8S}/bin:${K8S}/cni:${PATH}
@@ -77,7 +77,7 @@ source /etc/profile
 
 1. 编写systemd service.
 ```bash
-cat <<EOF > /usr/lib/systemd/system/docker.service
+cat <<EOF > /etc/systemd/system/docker.service
 [Unit]
 Description=Docker Application Container Engine
 Documentation=http://docs.docker.io
@@ -168,8 +168,7 @@ ExecStart=/opt/ok8s/bin/kubelet \
   --config=/var/lib/kubelet/config.yaml \
   --cni-bin-dir=/opt/ok8s/cni \
   --cni-conf-dir=/etc/cni/net.d \
-  --hostname-override=ok8s \
-  --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \
+  --kubeconfig=/etc/kubernetes/kubelet.conf \
   --network-plugin=cni \
   --pod-infra-container-image=k8s.gcr.io/pause:3.1 \
   --root-dir=/var/lib/kubelet
@@ -179,9 +178,7 @@ RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
-
 EOF
-
 ```
 
 2. 启用kubelet服务. `systemctl enable kubelet`, 在执行kubeadm初始化cluster之前kubelet服务是起不来的。
@@ -234,12 +231,13 @@ EOF
         && iptables -F -t nat && iptables -X -t nat \
         && iptables -F -t raw && iptables -X -t raw \
         && iptables -F -t mangle && iptables -X -t mangle
-    
+        
     systemctl disable firewalld
     ```
+
     ```bash
-    [preflight] Some fatal errors occurred:
-        [ERROR FileContent--proc-sys-net-bridge-bridge-nf-call-iptables]: /proc/sys/net/bridge/bridge-nf-call-iptables contents are not set to 1
+        [preflight] Some fatal errors occurred:
+            [ERROR FileContent--proc-sys-net-bridge-bridge-nf-call-iptables]: /proc/sys/net/bridge/bridge-nf-call-iptables contents are not set to 1
     ```
 4. `write /proc/self/attr/keycreate: permission denied`,   
 这个时候需要禁用selinux了。   
