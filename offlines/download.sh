@@ -57,7 +57,7 @@ function downK8sBins() {
 }
 
 function downK8sImages() {
-    echo "Download k8s:${k8sVersion} iamges"
+    echo -e "[INFO] \033[33mDownload k8s\033[0m : ${k8sVersion} iamges"
     images=""
     for image in $(cat ${DIR}/images); do
         echo "docker pull ${image}"
