@@ -33,6 +33,6 @@ jobs:
 
         echo "push to aliyun"
         docker logout
-        docker login registry.cn-hangzhou.aliyuncs.com -u wxdlong -p ${ACCESS_TOKEN}
+        docker login registry.cn-hangzhou.aliyuncs.com -u yjmnrg@gmail.com -p ${ACCESS_TOKEN}
         docker tag wxdlong/ok8s:${k8sVersion} registry.cn-hangzhou.aliyuncs.com/wxdlong/ok8s:${k8sVersion}
         docker push registry.cn-hangzhou.aliyuncs.com/wxdlong/ok8s:${k8sVersion}

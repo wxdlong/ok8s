@@ -20,7 +20,7 @@ function init() {
 }
 
 function downDocker() {
-    echo "Download Docker from ${DOCKER_URL}"
+    echo "Download Docker from ${DOCKER_URL}..."
     curl -L ${DOCKER_URL} | tar -zx -C ${TEMP_FILES}/bin
     chmod 755 ${TEMP_FILES}/bin/*
 }
