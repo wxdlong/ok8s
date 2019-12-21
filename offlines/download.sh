@@ -13,7 +13,7 @@ HELM_URL=https://get.helm.sh/helm-${helmVersion}-linux-amd64.tar.gz
 TEMP_FILES=/tmp/k8s_offline.$$
 
 function init() {
-    echo "Download path: ${DIR}"
+    echo "Download path: ${DIR}......"
     rm -rf ${TEMP_FILES} | echo "Areadly clean temp download files!"
     mkdir -p ${DIR}/download/{bin,cni}
     mkdir -p ${TEMP_FILES}/{bin,cni}
