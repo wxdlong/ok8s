@@ -45,8 +45,8 @@ nfvpe/multus:v3.4
 nginx:1.16.0  
 ```
 
-1. 如果己经有docker. 则用docker自动下载所有离线数据
-`docker run --rm -v ${PWD}/download:/ok8s wxdlong/ok8s:v1.16.3`
+1. 如果己经有docker. 则用docker自动下载所有离线数据。 
+`docker run --rm -v ${PWD}/download:/ok8s registry.cn-hangzhou.aliyuncs.com/wxdlong/ok8s:v1.16.3`
 
 2. 否则，运行./ok8s.sh -D. (需要运行在linux机器上)
 
